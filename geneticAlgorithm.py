@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import numpy as np
-#import math
 import time
 
 class GeneticAlgorithm(ABC):
@@ -10,27 +9,24 @@ class GeneticAlgorithm(ABC):
 		self.populationScore = []
 		self.maxValue = [None,None]
 
+
 	@abstractmethod
 	def fitnessFunction(self,x,y,z):
 		pass
 
-	#Initialize populuation randomly
+	
 	def setPopulation(self,populationNumber):
-
 		for i in range(populationNumber):
-
 			chromossome = np.random.uniform(0,100,3) 
 			self.population.append(chromossome) 
-			chromossomeScore = self.fitnessFunction(chromossome[0],chromossome[1],chromossome[2])
+			chromossomeScore = self.fitnessFunction(
+				chromossome[0],chromossome[1],chromossome[2])
 			self.populationScore.append([chromossomeScore,i])
 
 
-		#self.populationScore.sort(reverse=False)
-		#self.populationScore.sort()
-
 	def evaluatePopulation(self):
-
 		self.populationScore.sort(reverse=False)
+		
 		choosenChromossomeIt = self.populationScore[-1]
 		chromossomeItScore = choosenChromossomeIt[0]
 		chromossomeItPosition =  choosenChromossomeIt[1]
@@ -38,33 +34,33 @@ class GeneticAlgorithm(ABC):
 
 		self.maxValue = [chromossomeItScore, chromossomeItPosition, chromossomeIt]
 
-	def tournamentSelection(self, k=3):
-				
+
+	def tournamentSelection(self, kIndividuals=3):
 		generator = np.random.default_rng()
-		selection = generator.choice(len(self.population),k, replace=False)
+		selection = generator.choice(len(self.population),kIndividuals, replace=False)
 		
-		# set the minimum value as infinit 
-		minimumParentScore = 0
+		maximumParentScore = 0
 		for i in selection:
-			parentScoreByIteration = self.fitnessFunction(self.population[i][0],self.population[i][1],self.population[i][2])
+			parentScoreByIteration = self.fitnessFunction(
+				self.population[i][0],self.population[i][1],self.population[i][2])
 			
-			if (parentScoreByIteration > minimumParentScore):
+			if (parentScoreByIteration > maximumParentScore):
 				selectedParent = i
-				minimumParentScore = parentScoreByIteration
+				maximumParentScore = parentScoreByIteration
 				
 		return selectedParent
 
-	def selectParents(self, numberOfParents):
-		
+
+	def selectParents(self, numberOfParents,kIndividuals=3):
 		selectedParentsIndex = []
 		selectedParents = []
-
 		for i in range(numberOfParents):
-			parentI = self.tournamentSelection()
+			parentI = self.tournamentSelection(kIndividuals)
 			selectedParentsIndex.append(parentI)
 			selectedParents.append(self.population[parentI])
 		
 		return selectedParentsIndex
+
 
 	def crossOver(self, parentOneIndex, parentTwoIndex):
 		parentOne = self.population[parentOneIndex]
@@ -79,45 +75,41 @@ class GeneticAlgorithm(ABC):
 		
 		return [childOne,childTwo]
 
-	# k= number of children
-	def setOffSpring(self, selectedParentsIndex, k, threshold =0.5,):
-		
-		offSpring = []
-		
-		while (len(offSpring)<k):
 
+	# kChildren= number of children
+	def setOffSpring(self, selectedParentsIndex, kChildren, threshold =0.5,):
+		offSpring = []
+		while (len(offSpring)<kChildren):
 			generator = np.random.default_rng()
-			parentsForCrossoverIndex = generator.choice(selectedParentsIndex,2,replace=False)
+			parentsForCrossoverIndex = generator.choice(
+				selectedParentsIndex,2,replace=False)
 			
 			probabilityOfDoingCrossOver = np.random.uniform(0,1)
-						
 			if probabilityOfDoingCrossOver > threshold:
-
 				offSpringI = self.crossOver(parentsForCrossoverIndex[0],parentsForCrossoverIndex[1])
 				for i in offSpringI:
 					offSpring.append(i)
-			
 			else:
-				
 				for i in parentsForCrossoverIndex:	
 					offSpring.append(self.population[i].copy())
 			
 		return offSpring
 
-	#default maxMutationValue = 0.01*100		
+
 	def mutation(self, child, maxMutationValue = 1):
-		
 		for i in range(len(child)):
 			generator = np.random.default_rng()
 			mutationValue = generator.uniform(-maxMutationValue,maxMutationValue)
-			child[i] = child[i] + mutationValue
-		
+
+			if(child[i]+ mutationValue<100):
+				child[i] = child[i] + mutationValue
+			
 		return child
+
 
 	def setMutants(self, offSpring, maxMutationValue=1):
 		listOfMutantsScore = []
 		listOfMutants = []
-		
 		for i in offSpring:
 			mutant = self.mutation(i,maxMutationValue)
 			chromossomeScore = self.fitnessFunction(i[0],i[1],i[2])
@@ -125,12 +117,10 @@ class GeneticAlgorithm(ABC):
 			listOfMutantsScore.append(chromossomeScore)
 		
 		return [listOfMutants,listOfMutantsScore]
-
 	
+
 	def setNewPopulation(self,children,childrenScore):
-		
 		for i in range(len(children)):
-			
 			oldParent = self.populationScore.pop(i)
 			self.population.pop(oldParent[1])
 			child = children.pop(0)
@@ -140,30 +130,27 @@ class GeneticAlgorithm(ABC):
 			self.populationScore.insert(i,[childScore,oldParent[1]])
 
 
-		
-	def execute(self,populationNumber, numberOfParents,numberOfIterations, maxNumberOfRepetition=1 ,k=4, crossOverThr = 0.5, fileName = 'results'):
-		
+	def execute(self,populationNumber, numberOfParents,numberOfIterations, maxNumberOfRepetition=10 ,kIndividuals=3,k=4, crossOverThr = 0.5, fileName = 'results'):
 		file = open("{}.txt".format(fileName),"a")
-		initialData = 'Population Number: {}, Number of Parents: {}, Number of Iterations: {}, Number of Children: {} \n \n'.format(populationNumber,numberOfParents,numberOfIterations,k)
-		file.write(initialData)
+		file.write(
+            f'Population Number: {populationNumber}, Number of Parents: {numberOfParents}, Number of Iterations: {numberOfIterations}, Number of Children: {k} \n \n')
+		
 		start = time.time()	
+		
 		iteration = 0
 		numberOfRepetition = 0
-
-		#initialize the population
 		self.setPopulation(populationNumber)
 		
 		while ((iteration<numberOfIterations and numberOfRepetition < maxNumberOfRepetition)):
-			
-			file.write('iteration:{} \n'.format(iteration))
+			file.write(f'iteration:{iteration} \n')
 
 			previousIterationScore = self.maxValue[0]
-			
 			self.evaluatePopulation()
 			
-			file.write("Minimum Value: Score = {}, x = {}, y = {}, z={}, Position in Population={} \n".format(self.maxValue[0],self.maxValue[2][0],self.maxValue[2][1],self.maxValue[2][2],self.maxValue[1]))
+			file.write(
+                f'Minimum Value: Score = {self.maxValue[0]}, x = {self.maxValue[2][0]}, y = {self.maxValue[2][1]}, z={self.maxValue[2][2]}, Position in Population={self.maxValue[1]} \n')
 			
-			parentsIndex = self.selectParents(numberOfParents)
+			parentsIndex = self.selectParents(numberOfParents,kIndividuals)
 			offSpring = self.setOffSpring(parentsIndex,k,crossOverThr)
 			children = self.setMutants(offSpring)
 			
@@ -173,13 +160,12 @@ class GeneticAlgorithm(ABC):
 				numberOfRepetition= numberOfRepetition+1
 			else:
 				numberOfRepetition = 0 
-			file.write("number of repetition: {} \n".format(numberOfRepetition))
 			
-
+			file.write(f'number of repetition: {numberOfRepetition} \n')
 			iteration= iteration + 1
 			
 		end = time.time()
-		file.write("Total time of Execution:{} \n".format(end - start))		
+		file.write(f'Total time of Execution:{end - start} \n')	
 		file.close()		
 		return self.maxValue
 
