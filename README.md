@@ -8,6 +8,7 @@ The following modules were used to this implementation
 - [Numpy](https://numpy.org/)
 - [ABC](https://docs.python.org/3/library/abc.html)
 - [Time](https://docs.python.org/3/library/time.html)
+- [Math](https://docs.python.org/3/library/math.html)
 
 
 ### Getting Started
