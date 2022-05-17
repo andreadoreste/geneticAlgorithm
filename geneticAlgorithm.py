@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import time
+import math
 
 class GeneticAlgorithm(ABC):
 
@@ -39,7 +40,8 @@ class GeneticAlgorithm(ABC):
 		generator = np.random.default_rng()
 		selection = generator.choice(len(self.population),kIndividuals, replace=False)
 		
-		maximumParentScore = 0
+		maximumParentScore = - math.inf
+		#maximumParentScore = 0
 		for i in selection:
 			parentScoreByIteration = self.fitnessFunction(
 				self.population[i][0],self.population[i][1],self.population[i][2])
@@ -101,7 +103,7 @@ class GeneticAlgorithm(ABC):
 			generator = np.random.default_rng()
 			mutationValue = generator.uniform(-maxMutationValue,maxMutationValue)
 
-			if(child[i]+ mutationValue<100):
+			if(child[i]+ mutationValue<100 and child[i]+ mutationValue>0):
 				child[i] = child[i] + mutationValue
 			
 		return child
@@ -148,7 +150,7 @@ class GeneticAlgorithm(ABC):
 			self.evaluatePopulation()
 			
 			file.write(
-                f'Minimum Value: Score = {self.maxValue[0]}, x = {self.maxValue[2][0]}, y = {self.maxValue[2][1]}, z={self.maxValue[2][2]}, Position in Population={self.maxValue[1]} \n')
+                f'Maximum Value: Score = {self.maxValue[0]}, x = {self.maxValue[2][0]}, y = {self.maxValue[2][1]}, z={self.maxValue[2][2]}, Position in Population={self.maxValue[1]} \n')
 			
 			parentsIndex = self.selectParents(numberOfParents,kIndividuals)
 			offSpring = self.setOffSpring(parentsIndex,k,crossOverThr)
